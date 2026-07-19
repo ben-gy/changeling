@@ -28,7 +28,7 @@ import {
   type Position,
   type Variant,
 } from './chess';
-import { classifyRelease } from './engine/drag';
+import { classifyRelease } from '@ben-gy/game-engine/drag';
 import { pieceLabel, pieceSvg } from './pieces';
 
 const THRESHOLDS = { tapSlop: 3, swipeDist: 50, swipeVel: 0.5, swipeMaxMs: 250 };

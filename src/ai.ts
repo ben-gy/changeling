@@ -32,7 +32,7 @@ import {
   type Position,
   type Variant,
 } from './chess';
-import type { Rng } from './engine/rng';
+import type { Rng } from '@ben-gy/game-engine/rng';
 
 export const VALUE: readonly number[] = [0, 100, 320, 330, 500, 900, 0];
 

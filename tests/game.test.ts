@@ -19,7 +19,7 @@ import {
   movePromo,
 } from '../src/chess';
 import { chooseMove, STRENGTHS, material } from '../src/ai';
-import { makeRng } from '../src/engine/rng';
+import { makeRng } from '@ben-gy/game-engine/rng';
 
 const at = (g: Game, f: number, r: number): number => sq(g.variant, f, r);
 

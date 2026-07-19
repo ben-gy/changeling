@@ -16,7 +16,7 @@
  */
 
 import type { Variant } from './chess';
-import { makeRng, shuffle } from './engine/rng';
+import { makeRng, shuffle } from '@ben-gy/game-engine/rng';
 
 export interface Mode {
   id: string;

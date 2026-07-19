@@ -20,7 +20,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Net } from '../src/engine/net';
+import type { Net } from '@ben-gy/game-engine/net';
 
 interface Wire {
   peers: Map<string, Room>;
@@ -111,7 +111,7 @@ async function peer(id: string, opts: { claimHost?: boolean } = {}): Promise<Net
       return room;
     },
   }));
-  const mod = await import('../src/engine/net');
+  const mod = await import('@ben-gy/game-engine/net');
   return mod.createNet({ appId: 'test', roomId: 'R', claimHost: opts.claimHost });
 }
 
@@ -183,7 +183,14 @@ describe('host election — nobody hosts a mesh that has not formed', () => {
     connect('a', 'b');
     // Neither claimed (both arrived via a link into an empty room). They must
     // not deadlock waiting for an incumbent that does not exist.
-    vi.advanceTimersByTime(2600);
+    //
+    // The settle window is now 6s, not 2.5s. It was widened because 2.5s was
+    // short enough that a joiner whose mesh was still forming could time out,
+    // decide the room was empty, and self-elect over a host that was already
+    // there — the "a joiner stole the room" failure. Six seconds is longer than
+    // a real handshake, so the fallback only fires when there genuinely is no
+    // incumbent, which is the case this test builds.
+    vi.advanceTimersByTime(6100);
     expect(a.isHost()).toBe(true); // min-id, agreed by both
     expect(b.isHost()).toBe(false);
     expect(b.host()).toBe('a');

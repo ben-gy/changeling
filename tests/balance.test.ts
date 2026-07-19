@@ -56,7 +56,7 @@ import { describe, expect, it } from 'vitest';
 import { chooseMove, material, quietEval, type Strength } from '../src/ai';
 import { Game } from '../src/game';
 import { MODES, type Mode } from '../src/modes';
-import { makeRng } from '../src/engine/rng';
+import { makeRng } from '@ben-gy/game-engine/rng';
 
 /** Both seats play the SAME bot — any asymmetry in the result is the game's. */
 const BOT: Strength = { id: 'sim', name: 'Sim', depth: 2, noise: 28, nodes: 60_000 };
