@@ -12,27 +12,28 @@ import { mountFeedback } from './feedback';
 mountFeedback();
 // feedback:end
 
-import './engine/mobile.css';
+import '@ben-gy/game-engine/mobile.css';
 import './styles/main.css';
 
 import { chooseMove, quietEval, strengthOf, STRENGTHS, type Strength } from './ai';
 import { createBoard, type AnimHint, type BoardView } from './board';
 import { inCheck, kingSquare, moveFrom, movePromo, moveTo } from './chess';
 import { createCountdown, type Countdown } from './countdown';
-import { createNet, type Net } from './engine/net';
+import { createNet, roomAppId, setTurnConfig, type Net } from '@ben-gy/game-engine/net';
+import { getTurnConfig } from '@ben-gy/game-engine/turn';
 import {
   clearRoomInUrl,
   createLobby,
   createRoomEntry,
   normalizeRoomCode,
   setRoomInUrl,
-} from './engine/lobby';
-import { resolveName } from './engine/identity';
-import { hardenViewport } from './engine/mobile';
-import { createRounds, type RoundInfo, type Rounds } from './engine/rematch';
-import { makeRng, newSeed } from './engine/rng';
-import { createSfx } from './engine/sound';
-import { createStore } from './engine/storage';
+} from '@ben-gy/game-engine/lobby';
+import { resolveName } from '@ben-gy/game-engine/identity';
+import { hardenViewport } from '@ben-gy/game-engine/mobile';
+import { createRounds, type RoundInfo, type Rounds } from '@ben-gy/game-engine/rematch';
+import { makeRng, newSeed } from '@ben-gy/game-engine/rng';
+import { createSfx } from '@ben-gy/game-engine/sound';
+import { createStore } from '@ben-gy/game-engine/storage';
 import { DEFAULT_MODE, MODES, MODE_IDS, modeOf, type Mode } from './modes';
 import { pieceSvg } from './pieces';
 import { Session, type Seat } from './session';
@@ -44,6 +45,30 @@ const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matc
 
 const AI_ID = '~ai';
 const SELF_ID = '~you';
+
+/** The signaling namespace. `roomAppId` folds in the wire-protocol revision, so
+ *  a player on a stale cached build lands in a different namespace and simply
+ *  never sees us — honest, rather than half-connecting and desyncing. */
+const APP_ID = roomAppId('changeling');
+
+/**
+ * TURN credentials, fetched ONCE at module load and installed before any mesh.
+ *
+ * Trystero pre-builds a single global connection pool from the first joinRoom's
+ * config, so `setTurnConfig` after that point leaves the initiating half of
+ * every pair STUN-only. This game opens exactly one mesh — the game room in
+ * `enterRoom` — so the fetch is started here at boot and awaited there. Starting
+ * it early means it is almost always resolved by the time a player picks a room,
+ * and `getTurnConfig` is session-cached and fails open to `[]`, so a slow or
+ * dead credential endpoint degrades to the old STUN-only behaviour rather than
+ * holding anyone on a spinner.
+ */
+const turnReady: Promise<void> = getTurnConfig()
+  .then(setTurnConfig)
+  // getTurnConfig already resolves to [] on timeout, offline, CORS or a bad
+  // body. The catch is belt-and-braces: nothing about fetching ICE servers may
+  // ever be the reason a player cannot get into a room.
+  .catch(() => {});
 
 let mode: Mode = modeOf(store.get('mode', DEFAULT_MODE));
 let strength: Strength = strengthOf(store.get('ai', 'adept'));
@@ -286,13 +311,17 @@ function showRoomEntry(): void {
     container: host,
     title: 'Play with a friend',
     subtitle: 'Start a room and share the code, or type a friend’s code to join.',
-    onSubmit: (code, created) => enterRoom(normalizeRoomCode(code), created),
+    onSubmit: (code, created) => void enterRoom(normalizeRoomCode(code), created),
     onCancel: () => showMenu(),
   });
 }
 
 /** Join the room ONCE. Everything after this happens inside it. */
-function enterRoom(code: string, created: boolean): void {
+async function enterRoom(code: string, created: boolean): Promise<void> {
+  // The one await before the one mesh: ICE servers must be in force before
+  // Trystero builds its connection pool, or a peer behind carrier CGNAT is
+  // visible in signaling while the data channel never opens.
+  await turnReady;
   roomCode = code;
   setRoomInUrl(code);
   // A tally belongs to a match, and a match belongs to a room.
@@ -300,7 +329,7 @@ function enterRoom(code: string, created: boolean): void {
   tally.l = 0;
   tally.d = 0;
   net = createNet(
-    { appId: 'changeling', roomId: code, claimHost: created },
+    { appId: APP_ID, roomId: code, claimHost: created },
     {
       onHostChange: (_id, isSelfHost) => {
         session?.setHost(isSelfHost);
@@ -761,7 +790,7 @@ function boot(): void {
   const deepLink = new URL(location.href).searchParams.get('room');
   if (deepLink) {
     clearRoomInUrl();
-    enterRoom(normalizeRoomCode(deepLink), false);
+    void enterRoom(normalizeRoomCode(deepLink), false);
     return;
   }
   showMenu();

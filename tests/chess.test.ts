@@ -34,7 +34,7 @@ import {
   type Variant,
 } from '../src/chess';
 import { MODES, variantFor } from '../src/modes';
-import { makeRng } from '../src/engine/rng';
+import { makeRng } from '@ben-gy/game-engine/rng';
 
 const CLASSIC: Variant = MODES.classic.variant;
 const SKIRMISH: Variant = MODES.skirmish.variant;

@@ -16,7 +16,14 @@
 
 import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { hardenViewport, type Unharden } from '../src/engine/mobile';
+import { hardenViewport, type Unharden } from '@ben-gy/game-engine/mobile';
+
+/**
+ * The mobile baseline sheet now ships in the engine package rather than being
+ * vendored into src/engine/, but it is still the sheet main.css has to beat, so
+ * these invariants keep asserting against the real file the build imports.
+ */
+const ENGINE_MOBILE_CSS = 'node_modules/@ben-gy/game-engine/src/mobile.css';
 
 /** Fire a cancelable event and report whether something refused it. */
 function fire(target: EventTarget, type: string): boolean {
@@ -185,7 +192,7 @@ describe('the [hidden] rule', () => {
   const hiddenRule = /\[hidden\]\s*\{[^}]*display:\s*none\s*!important/;
 
   it.each([
-    ['src/engine/mobile.css'],
+    [ENGINE_MOBILE_CSS],
     ['src/styles/main.css'],
   ])('%s forces display:none on [hidden]', (path) => {
     expect(readFileSync(path, 'utf8')).toMatch(hiddenRule);
@@ -225,7 +232,7 @@ describe('the board fits ANY board size (principle #20)', () => {
   });
 
   it('hides the site footer mid-round so it never steals play area', () => {
-    const mobile = readFileSync('src/engine/mobile.css', 'utf8');
+    const mobile = readFileSync(ENGINE_MOBILE_CSS, 'utf8');
     expect(`${css}${mobile}`).toMatch(/body\.playing\s+\.site-footer\s*\{[^}]*display:\s*none/);
   });
 });
