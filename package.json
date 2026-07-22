@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Real chess with one rule bolted on — capture a piece and you become it.",
+  "license": "AGPL-3.0-or-later",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

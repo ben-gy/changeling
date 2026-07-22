@@ -1,3 +1,8 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (C) 2026 Ben Richardson — https://benrichardson.dev
+ * Additional terms under AGPL-3.0 section 7(b) apply; see ADDITIONAL-TERMS.md.
+ */
 /* Changeling — deep slate board, bone vs ink pieces.
    The two sides differ in LUMINANCE as well as hue, and every board state is
    carried by shape (ring vs dot vs outline) as well as colour, so the game is
